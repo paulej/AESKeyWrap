@@ -13,8 +13,8 @@
  *      None.
  */
 
-#ifndef __AES_KEY_WRAP_H__
-#define __AES_KEY_WRAP_H__
+#ifndef AES_KEY_WRAP_H
+#define AES_KEY_WRAP_H
 
 #include <stdint.h>                             /* For uint32_t             */
 
@@ -145,13 +145,13 @@ int aes_ecb_decrypt(const unsigned char *key,
  *      use different pointers to memory for the ciphertext and plaintext.
  *
  */
-int aes_key_wrap(   const unsigned char *key,
-                    unsigned int key_length,
-                    const unsigned char *plaintext,
-                    unsigned int plaintext_length,
-                    const unsigned char *initialization_vector,
-                    unsigned char *ciphertext,
-                    unsigned int *ciphertext_length);
+int aes_key_wrap(const unsigned char *key,
+                 unsigned int key_length,
+                 const unsigned char *plaintext,
+                 unsigned int plaintext_length,
+                 const unsigned char *initialization_vector,
+                 unsigned char *ciphertext,
+                 unsigned int *ciphertext_length);
 
 /*
  *  aes_key_unwrap
@@ -219,14 +219,14 @@ int aes_key_wrap(   const unsigned char *key,
  *      use different pointers to memory for the ciphertext and plaintext.
  *
  */
-int aes_key_unwrap( const unsigned char *key,
-                    unsigned int key_length,
-                    const unsigned char *ciphertext,
-                    unsigned int ciphertext_length,
-                    const unsigned char *initialization_vector,
-                    unsigned char *plaintext,
-                    unsigned int *plaintext_length,
-                    unsigned char *integrity_data);
+int aes_key_unwrap(const unsigned char *key,
+                   unsigned int key_length,
+                   const unsigned char *ciphertext,
+                   unsigned int ciphertext_length,
+                   const unsigned char *initialization_vector,
+                   unsigned char *plaintext,
+                   unsigned int *plaintext_length,
+                   unsigned char *integrity_data);
 
 /*
  *  aes_key_wrap_with_padding
@@ -268,13 +268,56 @@ int aes_key_unwrap( const unsigned char *key,
  *      for the ciphertext and plaintext.
  *
  */
-int aes_key_wrap_with_padding(  const unsigned char *key,
-                                unsigned int key_length,
-                                const unsigned char *plaintext,
-                                unsigned int plaintext_length,
-                                unsigned char *alternative_iv,
-                                unsigned char *ciphertext,
-                                unsigned int *ciphertext_length);
+int aes_key_wrap_with_padding(const unsigned char *key,
+                              unsigned int key_length,
+                              const unsigned char *plaintext,
+                              unsigned int plaintext_length,
+                              unsigned char *alternative_iv,
+                              unsigned char *ciphertext,
+                              unsigned int *ciphertext_length);
+
+/*
+ *  aes_key_wrap_with_padding_openssl
+ *
+ *  Description:
+ *      This fuction performs the AES Key Wrap with Padding as specified in
+ *      RFC 5649 using OpenSSL APIs.
+ *
+ *  Parameters:
+ *      key [in]
+ *          A pointer to the key encrypting key (KEK).
+ *      key_length [in]
+ *          The length in bits of the KEK.  Valid values are 128, 192,
+ *          and 256.
+ *      plaintext [in]
+ *          The plaintext value that is to be encrypted with the provided key.
+ *      plaintext_length [in]
+ *          The length in octets of the plaintext paramter.  This value
+ *          must be in the range of 1 to AES_Key_Wrap_with_Padding_Max.
+ *      ciphertext [out]
+ *          A pointer to a buffer to hold the ciphertext.  This function does
+ *          not allocate memory and expects the caller to pass a pointer
+ *          to a block of memory large enough to hold the output.
+ *      ciphertext_length [out]
+ *          This is a the length of the resulting ciphertext.
+ *
+ *  Returns:
+ *      Zero (0) if successful, non-zero if there was an error.
+ *
+ *  Comments:
+ *      The encryption routines expected to encrypt "in place", which AES
+ *      will do.  Thus, the plaintext and ciphertext pointers are the same
+ *      when attempting to encrypt data in some parts of this code.  However,
+ *      callers of this function should use different pointers to memory
+ *      for the ciphertext and plaintext.
+ *
+ */
+int aes_key_wrap_with_padding_openssl(const unsigned char *key,
+                                      unsigned int key_length,
+                                      const unsigned char *plaintext,
+                                      unsigned int plaintext_length,
+                                      unsigned char *ciphertext,
+                                      unsigned int *ciphertext_length);
 
 /*
  *  aes_key_unwrap_with_padding
@@ -323,4 +366,46 @@ int aes_key_unwrap_with_padding(const unsigned char *key,
                                 unsigned char *plaintext,
                                 unsigned int *plaintext_length);
 
-#endif /* __AES_KEY_WRAP_H__ */
+/*
+ *  aes_key_unwrap_with_padding
+ *
+ *  Description:
+ *      This fuction performs the AES Key Unwrap with Padding as specified in
+ *      RFC 5649 using OpenSSL APIs.
+ *
+ *  Parameters:
+ *      key [in]
+ *          A pointer to the key encryption key (KEK).
+ *      key_length [in]
+ *          The length in bits of the KEK.  Valid values are 128, 192,
+ *          and 256.
+ *      ciphertext [in]
+ *          A pointer to the ciphertext to decrypt.
+ *      ciphertext_length [in]
+ *          This is a the length of the ciphertext.
+ *      plaintext [out]
+ *          A pointer to a buffer to hold the decrypted ciphertext.  This
+ *          function does not allocate memory and expects the caller to pass
+ *          a pointer to a block of memory large enough to hold the output.
+ *      plaintext_length [out]
+ *          This is a the length of the resulting plaintext.
+ *
+ *  Returns:
+ *      Zero (0) if successful, non-zero if there was an error.
+ *
+ *  Comments:
+ *      The decryption routines expected to decrypt "in place", which AES
+ *      will do.  Thus, the plaintext and ciphertext pointers are the same
+ *      when attempting to encrypt data in some parts of this code.  However,
+ *      callers of this function should use different pointers to memory
+ *      for the ciphertext and plaintext.
+ *
+ */
+int aes_key_unwrap_with_padding_openssl(const unsigned char *key,
+                                        unsigned int key_length,
+                                        const unsigned char *ciphertext,
+                                        unsigned int ciphertext_length,
+                                        unsigned char *plaintext,
+                                        unsigned int *plaintext_length);
+
+#endif /* AES_KEY_WRAP_H */

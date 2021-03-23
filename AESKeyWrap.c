@@ -9,6 +9,13 @@
  *      Padding (RFC 5649).  Functions are provided to both perform
  *      key wrap and unwrap.  It relies on OpenSSL for the AES algorithm.
  *
+ *      For AES Key Wrap with Padding, there are examples calling OpenSSL
+ *      routines to produce the same result.  The original code was written
+ *      prior to OpenSSL's implementation of key wrap.  Those routines
+ *      exist here to serve two purposes: 1) to prove the implementation is
+ *      correct (or at least consistent) and 2) to provide an example
+ *      of how to the OpenSSL's APIs.
+ *
  *  Portability Issues:
  *      It is assumed that the AES ECB cipher routines will encrypt or
  *      decrypt "in place", which AES can do and the implementation
@@ -130,11 +137,7 @@ int aes_ecb_encrypt(const unsigned char *key,
     /*
      * Encrypt the plaintext
      */
-    if (!EVP_EncryptInit_ex(ctx,
-                            cipher,
-                            NULL,
-                            key,
-                            NULL))
+    if (!EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL))
     {
         EVP_CIPHER_CTX_free(ctx);
         return AESKW_CIPHER_FAIL;
@@ -257,11 +260,7 @@ int aes_ecb_decrypt(const unsigned char *key,
     /*
      * Decrypt the ciphertext
      */
-    if (!EVP_DecryptInit_ex(ctx,
-                            cipher,
-                            NULL,
-                            key,
-                            NULL))
+    if (!EVP_DecryptInit_ex(ctx, cipher, NULL, key, NULL))
     {
         EVP_CIPHER_CTX_free(ctx);
         return AESKW_CIPHER_FAIL;
@@ -346,13 +345,13 @@ int aes_ecb_decrypt(const unsigned char *key,
  *      use different pointers to memory for the ciphertext and plaintext.
  *
  */
-int aes_key_wrap(   const unsigned char *key,
-                    unsigned int key_length,
-                    const unsigned char *plaintext,
-                    unsigned int plaintext_length,
-                    const unsigned char *initialization_vector,
-                    unsigned char *ciphertext,
-                    unsigned int *ciphertext_length)
+int aes_key_wrap(const unsigned char *key,
+                 unsigned int key_length,
+                 const unsigned char *plaintext,
+                 unsigned int plaintext_length,
+                 const unsigned char *initialization_vector,
+                 unsigned char *ciphertext,
+                 unsigned int *ciphertext_length)
 {
     int i, j, k;                                /* Loop counters            */
     unsigned int n;                             /* Number of 64-bit blocks  */
@@ -390,21 +389,17 @@ int aes_key_wrap(   const unsigned char *key,
     /*
      * Perform the key wrap
      */
-    memcpy(ciphertext+8, plaintext, plaintext_length);
-    for(j=0, t=1; j<=5; j++)
+    memcpy(ciphertext + 8, plaintext, plaintext_length);
+    for (j = 0, t = 1; j <= 5; j++)
     {
-        for(i=1, R=ciphertext+8; i<=n; i++, t++, R+=8)
+        for (i = 1, R = ciphertext + 8; i <= n; i++, t++, R += 8)
         {
-            memcpy(B+8, R, 8);
-            if (aes_ecb_encrypt(key,
-                                key_length,
-                                B,
-                                16,
-                                B))
+            memcpy(B + 8, R, 8);
+            if (aes_ecb_encrypt(key, key_length, B, 16, B))
             {
                 return AESKW_CIPHER_FAIL;
             }
-            for(k=7, tt=t; (k>=0) && (tt>0); k--, tt>>=8)
+            for (k = 7, tt = t; (k >= 0) && (tt > 0); k--, tt >>= 8)
             {
                 A[k] ^= (unsigned char) (tt & 0xFF);
             }
@@ -487,14 +482,14 @@ int aes_key_wrap(   const unsigned char *key,
  *      use different pointers to memory for the ciphertext and plaintext.
  *
  */
-int aes_key_unwrap( const unsigned char *key,
-                    unsigned int key_length,
-                    const unsigned char *ciphertext,
-                    unsigned int ciphertext_length,
-                    const unsigned char *initialization_vector,
-                    unsigned char *plaintext,
-                    unsigned int *plaintext_length,
-                    unsigned char *integrity_data)
+int aes_key_unwrap(const unsigned char *key,
+                   unsigned int key_length,
+                   const unsigned char *ciphertext,
+                   unsigned int ciphertext_length,
+                   const unsigned char *initialization_vector,
+                   unsigned char *plaintext,
+                   unsigned int *plaintext_length,
+                   unsigned char *integrity_data)
 {
     int i, j, k;                                /* Loop counters            */
     unsigned int n;                             /* Number of 64-bit blocks  */
@@ -525,25 +520,23 @@ int aes_key_unwrap( const unsigned char *key,
     /*
      * Perform the key wrap
      */
-    memcpy(plaintext, ciphertext+8, ciphertext_length-8);
-    for(j=5, t=6*n; j>=0; j--)
+    memcpy(plaintext, ciphertext + 8, ciphertext_length - 8);
+    for (j = 5, t = 6 * n; j >= 0; j--)
     {
-        for(i=n, R=plaintext+ciphertext_length-16; i>=1; i--, t--, R-=8)
+        for (i = n, R = plaintext + ciphertext_length - 16;
+             i >= 1;
+             i--, t--, R -= 8)
         {
-            for(k=7, tt=t; (k>=0) && (tt>0); k--, tt>>=8)
+            for (k = 7, tt = t; (k >= 0) && (tt > 0); k--, tt >>= 8)
             {
                 A[k] ^= (unsigned char) (tt & 0xFF);
             }
-            memcpy(B+8, R, 8);
-            if (aes_ecb_decrypt(key,
-                                key_length,
-                                B,
-                                16,
-                                B))
+            memcpy(B + 8, R, 8);
+            if (aes_ecb_decrypt(key, key_length, B, 16, B))
             {
                 return AESKW_CIPHER_FAIL;
             }
-            memcpy(R, B+8, 8);
+            memcpy(R, B + 8, 8);
         }
     }
 
@@ -567,14 +560,14 @@ int aes_key_unwrap( const unsigned char *key,
          */
         if (initialization_vector)
         {
-            if (memcmp(initialization_vector,A,8))
+            if (memcmp(initialization_vector, A, 8))
             {
                 return AESKW_INTEGRITY_FAIL;
             }
         }
         else
         {
-            if (memcmp(AES_Key_Wrap_Default_IV,A,8))
+            if (memcmp(AES_Key_Wrap_Default_IV, A, 8))
             {
                 return AESKW_INTEGRITY_FAIL;
             }
@@ -624,13 +617,13 @@ int aes_key_unwrap( const unsigned char *key,
  *      for the ciphertext and plaintext.
  *
  */
-int aes_key_wrap_with_padding(  const unsigned char *key,
-                                unsigned int key_length,
-                                const unsigned char *plaintext,
-                                unsigned int plaintext_length,
-                                unsigned char *alternative_iv,
-                                unsigned char *ciphertext,
-                                unsigned int *ciphertext_length)
+int aes_key_wrap_with_padding(const unsigned char *key,
+                              unsigned int key_length,
+                              const unsigned char *plaintext,
+                              unsigned int plaintext_length,
+                              unsigned char *alternative_iv,
+                              unsigned char *ciphertext,
+                              unsigned int *ciphertext_length)
 {
     unsigned int plaintext_padded_length;       /* Len of padded plaintext  */
     unsigned int padding_length;                /* Number of padding octets */
@@ -670,12 +663,12 @@ int aes_key_wrap_with_padding(  const unsigned char *key,
      * second 4 octets of the buffer
      */
     network_word = htonl(plaintext_length);
-    memcpy(ciphertext+4, &network_word, 4);
+    memcpy(ciphertext + 4, &network_word, 4);
 
     /*
      * Copy the plaintext into the ciphertext buffer for encryption
      */
-    memcpy(ciphertext+8, plaintext, plaintext_length);
+    memcpy(ciphertext + 8, plaintext, plaintext_length);
 
     /*
      * Now pad the buffer to be an even 8 octets and compute the length
@@ -704,11 +697,7 @@ int aes_key_wrap_with_padding(  const unsigned char *key,
         /*
          * Encrypt using AES ECB mode
          */
-        if (aes_ecb_encrypt(key,
-                            key_length,
-                            ciphertext,
-                            16,
-                            ciphertext))
+        if (aes_ecb_encrypt(key, key_length, ciphertext, 16, ciphertext))
         {
             return AESKW_CIPHER_FAIL;
         }
@@ -734,6 +723,116 @@ int aes_key_wrap_with_padding(  const unsigned char *key,
             return AESKW_CIPHER_FAIL;
         }
     }
+
+    return AESKW_OK;
+}
+
+/*
+ *  aes_key_wrap_with_padding_openssl
+ *
+ *  Description:
+ *      This fuction performs the AES Key Wrap with Padding as specified in
+ *      RFC 5649 using OpenSSL APIs.
+ *
+ *  Parameters:
+ *      key [in]
+ *          A pointer to the key encrypting key (KEK).
+ *      key_length [in]
+ *          The length in bits of the KEK.  Valid values are 128, 192,
+ *          and 256.
+ *      plaintext [in]
+ *          The plaintext value that is to be encrypted with the provided key.
+ *      plaintext_length [in]
+ *          The length in octets of the plaintext paramter.  This value
+ *          must be in the range of 1 to AES_Key_Wrap_with_Padding_Max.
+ *      ciphertext [out]
+ *          A pointer to a buffer to hold the ciphertext.  This function does
+ *          not allocate memory and expects the caller to pass a pointer
+ *          to a block of memory large enough to hold the output.
+ *      ciphertext_length [out]
+ *          This is a the length of the resulting ciphertext.
+ *
+ *  Returns:
+ *      Zero (0) if successful, non-zero if there was an error.
+ *
+ *  Comments:
+ *      The encryption routines expected to encrypt "in place", which AES
+ *      will do.  Thus, the plaintext and ciphertext pointers are the same
+ *      when attempting to encrypt data in some parts of this code.  However,
+ *      callers of this function should use different pointers to memory
+ *      for the ciphertext and plaintext.
+ *
+ */
+int aes_key_wrap_with_padding_openssl(const unsigned char *key,
+                                      unsigned int key_length,
+                                      const unsigned char *plaintext,
+                                      unsigned int plaintext_length,
+                                      unsigned char *ciphertext,
+                                      unsigned int *ciphertext_length)
+{
+    EVP_CIPHER_CTX *ctx;                    /* OpenSSL cryptographic context */
+    const EVP_CIPHER *cipher;               /* Cipher to use                 */
+    int final_length;                       /* EVP_EncryptFinal_ex length    */
+
+    /* Select the appropriate cipher */
+    switch (key_length)
+    {
+        case 128:
+            cipher = EVP_aes_128_wrap_pad();
+            break;
+
+        case 192:
+            cipher = EVP_aes_192_wrap_pad();
+            break;
+
+        case 256:
+            cipher = EVP_aes_256_wrap_pad();
+            break;
+
+        default:
+            return AESKW_BAD_PARAM;
+    }
+
+    // Initialize the OpenSSL cryptographic context
+    if (!(ctx = EVP_CIPHER_CTX_new()))
+    {
+        return AESKW_CIPHER_FAIL;
+    }
+
+    /* Must allow wrap mode, because OpenSSL does nothing in an obvious way */
+    EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
+
+    /* Initialize the cryptographic context */
+    if (!EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL))
+    {
+        EVP_CIPHER_CTX_free(ctx);
+        return AESKW_CIPHER_FAIL;
+    }
+
+    if (!EVP_EncryptUpdate(
+            ctx,
+            ciphertext,
+            (int *)ciphertext_length,
+            plaintext,
+            (int)plaintext_length))
+    {
+        EVP_CIPHER_CTX_free(ctx);
+        return AESKW_CIPHER_FAIL;
+    }
+
+    if (!EVP_EncryptFinal_ex(ctx,
+                             ciphertext + *ciphertext_length,
+                             &final_length))
+    {
+        EVP_CIPHER_CTX_free(ctx);
+        return AESKW_CIPHER_FAIL;
+    }
+
+    /* Update the ciphertext length */
+    *ciphertext_length += final_length;
+
+    /* Free the OpenSSL cryptographic context */
+    EVP_CIPHER_CTX_free(ctx);
 
     return AESKW_OK;
 }
@@ -833,7 +932,7 @@ int aes_key_unwrap_with_padding(const unsigned char *key,
         /*
          * Copy the plaintext into the output buffer
          */
-        memcpy(plaintext, plaintext_buffer+8, 8);
+        memcpy(plaintext, plaintext_buffer + 8, 8);
 
         /*
          * Set the plaintext_length to 8
@@ -879,11 +978,11 @@ int aes_key_unwrap_with_padding(const unsigned char *key,
     /*
      * Determine the original message length and sanity check
      */
-    memcpy(&network_word, integrity_data+4, 4);
+    memcpy(&network_word, integrity_data + 4, 4);
     message_length_indicator = ntohl(network_word);
     if ((message_length_indicator > *plaintext_length) ||
         ((*plaintext_length > 8) &&
-         (message_length_indicator < (*plaintext_length)-7)))
+         (message_length_indicator < (*plaintext_length) - 7)))
     {
         return AESKW_CIPHER_FAIL;
     }
@@ -893,7 +992,7 @@ int aes_key_unwrap_with_padding(const unsigned char *key,
      */
     p = plaintext + message_length_indicator;
     q = plaintext + *plaintext_length;
-    while(p<q)
+    while (p < q)
     {
         if (*p++)
         {
@@ -902,6 +1001,112 @@ int aes_key_unwrap_with_padding(const unsigned char *key,
     }
 
     *plaintext_length = message_length_indicator;
+
+    return AESKW_OK;
+}
+
+/*
+ *  aes_key_unwrap_with_padding_openssl
+ *
+ *  Description:
+ *      This fuction performs the AES Key Unwrap with Padding as specified in
+ *      RFC 5649 using OpenSSL APIs.
+ *
+ *  Parameters:
+ *      key [in]
+ *          A pointer to the key encryption key (KEK).
+ *      key_length [in]
+ *          The length in bits of the KEK.  Valid values are 128, 192,
+ *          and 256.
+ *      ciphertext [in]
+ *          A pointer to the ciphertext to decrypt.
+ *      ciphertext_length [in]
+ *          This is a the length of the ciphertext.
+ *      plaintext [out]
+ *          A pointer to a buffer to hold the decrypted ciphertext.  This
+ *          function does not allocate memory and expects the caller to pass
+ *          a pointer to a block of memory large enough to hold the output.
+ *      plaintext_length [out]
+ *          This is a the length of the resulting plaintext.
+ *
+ *  Returns:
+ *      Zero (0) if successful, non-zero if there was an error.
+ *
+ *  Comments:
+ *      The decryption routines expected to decrypt "in place", which AES
+ *      will do.  Thus, the plaintext and ciphertext pointers are the same
+ *      when attempting to encrypt data in some parts of this code.  However,
+ *      callers of this function should use different pointers to memory
+ *      for the ciphertext and plaintext.
+ *
+ */
+int aes_key_unwrap_with_padding_openssl(const unsigned char *key,
+                                        unsigned int key_length,
+                                        const unsigned char *ciphertext,
+                                        unsigned int ciphertext_length,
+                                        unsigned char *plaintext,
+                                        unsigned int *plaintext_length)
+{
+    EVP_CIPHER_CTX *ctx;                    /* OpenSSL cryptographic context */
+    const EVP_CIPHER *cipher;               /* Cipher to use                 */
+    int final_length;                       /* EVP_EncryptFinal_ex length    */
+
+    /* Select the appropriate cipher */
+    switch (key_length)
+    {
+        case 128:
+            cipher = EVP_aes_128_wrap_pad();
+            break;
+
+        case 192:
+            cipher = EVP_aes_192_wrap_pad();
+            break;
+
+        case 256:
+            cipher = EVP_aes_256_wrap_pad();
+            break;
+
+        default:
+            return AESKW_BAD_PARAM;
+    }
+
+    /* Initialize the OpenSSL cryptographic context */
+    if (!(ctx = EVP_CIPHER_CTX_new())) return AESKW_CIPHER_FAIL;
+
+    /* Must allow wrap mode, because OpenSSL does nothing in an obvious way */
+    EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
+
+    /* Initialize the cryptographic context */
+    if (!EVP_DecryptInit_ex(ctx, cipher, NULL, key, NULL))
+    {
+        EVP_CIPHER_CTX_free(ctx);
+        return AESKW_CIPHER_FAIL;
+    }
+
+    if (!EVP_DecryptUpdate(
+            ctx,
+            plaintext,
+            (int *)plaintext_length,
+            ciphertext,
+            (int)ciphertext_length))
+    {
+        EVP_CIPHER_CTX_free(ctx);
+        return AESKW_CIPHER_FAIL;
+    }
+
+    if (!EVP_DecryptFinal_ex(ctx,
+                             plaintext + *plaintext_length,
+                             &final_length))
+    {
+        EVP_CIPHER_CTX_free(ctx);
+        return AESKW_CIPHER_FAIL;
+    }
+
+    /* Update the plaintext length */
+    *plaintext_length += final_length;
+
+    /* Free the OpenSSL cryptographic context */
+    EVP_CIPHER_CTX_free(ctx);
 
     return AESKW_OK;
 }

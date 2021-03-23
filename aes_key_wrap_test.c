@@ -22,7 +22,7 @@
  *  aeskw_test
  *
  *  Description:
- *      Test AES Key Wrap (RFC 3394) test routine
+ *      Test AES Key Wrap (RFC 3394) test routines.
  *
  *  Parameters:
  *      key
@@ -45,12 +45,12 @@
  *      None.
  *
  */
-int aeskw_test( const unsigned char *key,
-                unsigned int key_length,
-                const unsigned char *plaintext,
-                unsigned int plaintext_length,
-                const unsigned char *expected_ciphertext,
-                unsigned int expected_ciphertext_length)
+int aeskw_test(const unsigned char *key,
+               unsigned int key_length,
+               const unsigned char *plaintext,
+               unsigned int plaintext_length,
+               const unsigned char *expected_ciphertext,
+               unsigned int expected_ciphertext_length)
 {
     unsigned char ciphertext[1024];
     unsigned char plaintext_check[1024];
@@ -110,14 +110,14 @@ int aeskw_test( const unsigned char *key,
 
     printf("Decrypting using aes_key_unwrap()\n");
 
-    if (aes_key_unwrap( key,
-                        key_length,
-                        ciphertext,
-                        ciphertext_length,
-                        NULL,
-                        plaintext_check,
-                        &plaintext_check_length,
-                        NULL))
+    if (aes_key_unwrap(key,
+                       key_length,
+                       ciphertext,
+                       ciphertext_length,
+                       NULL,
+                       plaintext_check,
+                       &plaintext_check_length,
+                       NULL))
     {
         printf("Error decrypting using aes_key_unwrap()\n");
         return (-1);
@@ -157,7 +157,7 @@ int aeskw_test( const unsigned char *key,
  *  aeskw_with_padding_test
  *
  *  Description:
- *      Test AES Key Wrap with Padding (RFC 5649) test routine
+ *      Test AES Key Wrap with Padding (RFC 5649) test routines.
  *
  *  Parameters:
  *      key
@@ -288,6 +288,139 @@ int aeskw_with_padding_test(const unsigned char *key,
 }
 
 /*
+ *  aeskw_with_padding_test_openssl
+ *
+ *  Description:
+ *      Test AES Key Wrap with Padding (RFC 5649) test routine using
+ *      APIs calling OpenSSL routines.
+ *
+ *  Parameters:
+ *      key
+ *          The encryption key
+ *      key_length
+ *          The length of the encryption key in bits
+ *      plaintext
+ *          The plaintext to encrypt
+ *      plaintext_length
+ *          The length of the plaintext
+ *      expected_ciphertext
+ *          The expected ciphertext
+ *      expected_ciphertext_length
+ *          The expected ciphertext length
+ *
+ *  Returns:
+ *      Zero if successful, non-zero otherwise.
+ *
+ *  Comments:
+ *      None.
+ *
+ */
+int aeskw_with_padding_test_openssl(const unsigned char *key,
+                                    unsigned int key_length,
+                                    const unsigned char *plaintext,
+                                    unsigned int plaintext_length,
+                                    const unsigned char *expected_ciphertext,
+                                    unsigned int expected_ciphertext_length)
+{
+    unsigned char ciphertext[1024];
+    unsigned char plaintext_check[1024];
+    unsigned int ciphertext_length;
+    unsigned int plaintext_check_length;
+    int i;
+    const unsigned char *p1, *p2;
+
+    /************************************************
+     * ENCRYPT
+     ************************************************/
+
+    printf("Encrypting using aes_key_wrap_with_padding_openssl()\n");
+
+    if (aes_key_wrap_with_padding_openssl(key,
+                                          key_length,
+                                          plaintext,
+                                          plaintext_length,
+                                          ciphertext,
+                                          &ciphertext_length))
+    {
+        printf("Error encrypting using aes_key_wrap_with_padding_openssl()\n");
+        return (-1);
+    }
+
+    /************************************************
+     * CHECK AGAINST KNOWN CIPHERTEXT
+     ************************************************/
+
+    printf("Checking known ciphertext\n");
+
+    if (ciphertext_length != expected_ciphertext_length)
+    {
+        printf("Error: ciphertext length (%i) does not match "
+               "expected (%i)\n",
+               ciphertext_length, expected_ciphertext_length);
+        return (-1);
+    }
+    else
+    {
+        printf("Encrypted lengths match\n");
+    }
+
+    for(i=0, p1=ciphertext, p2=expected_ciphertext; i<ciphertext_length; i++)
+    {
+        if (*(p1++) != *(p2++))
+        {
+            printf ("Error: ciphertext does not match expected\n");
+            return (-1);
+        }
+    }
+
+    /************************************************
+     * DECRYPT
+     ************************************************/
+
+    printf("Decrypting using aes_key_unwrap_with_padding_openssl()\n");
+
+    if (aes_key_unwrap_with_padding_openssl(key,
+                                            key_length,
+                                            ciphertext,
+                                            ciphertext_length,
+                                            plaintext_check,
+                                            &plaintext_check_length))
+    {
+        printf("Error decrypting using aes_key_unwrap_with_padding_openssl()\n");
+        return (-1);
+    }
+
+    /************************************************
+     * CHECK DECRYPTION RESULT
+     ************************************************/
+
+    printf("Checking aes_key_unwrap_with_padding_openssl()\n");
+
+    if (plaintext_check_length != plaintext_length)
+    {
+        printf("Error: Plaintext length (%i) does not match "
+               "expected (%i)\n",
+               plaintext_check_length, plaintext_length);
+        return (-1);
+    }
+    else
+    {
+        printf("Decrypted lengths match\n");
+    }
+
+    for(i=0, p1=plaintext, p2=plaintext_check; i<plaintext_check_length; i++)
+    {
+        if (*(p1++) != *(p2++))
+        {
+            printf ("Error: plaintext does not match expected\n");
+            return (-1);
+        }
+    }
+
+    return (0);
+}
+
+/*
  *  rfc5649_test
  *
  *  Description:
@@ -360,7 +493,31 @@ int rfc5649_test()
         return (-1);
     }
 
+    /* Perform the same tests as above, but using OpenSSL */
+    if (aeskw_with_padding_test_openssl(key,
+                                        sizeof(key) * 8,
+                                        plaintext_20,
+                                        sizeof(plaintext_20),
+                                        ciphertext_20,
+                                        sizeof(ciphertext_20)))
+    {
+        printf("Exiting rfc5649_test()\n");
+        return (-1);
+    }
+
+    if (aeskw_with_padding_test_openssl(key,
+                                        sizeof(key) * 8,
+                                        plaintext_7,
+                                        sizeof(plaintext_7),
+                                        ciphertext_7,
+                                        sizeof(ciphertext_7)))
+    {
+        printf("Exiting rfc5649_test()\n");
+        return (-1);
+    }
+
     printf("Exiting rfc5649_test()\n");
+
 
     return 0;
 }
@@ -499,67 +656,67 @@ int rfc3394_test()
 
     printf("Entering rfc3394_test()\n");
 
-    if (aeskw_test( key_1,
-                    sizeof(key_1)*8,
-                    plaintext_1,
-                    sizeof(plaintext_1),
-                    ciphertext_1,
-                    sizeof(ciphertext_1)))
+    if (aeskw_test(key_1,
+                   sizeof(key_1) * 8,
+                   plaintext_1,
+                   sizeof(plaintext_1),
+                   ciphertext_1,
+                   sizeof(ciphertext_1)))
     {
         printf("Exiting rfc3394_test()\n");
         return (-1);
     }
 
-    if (aeskw_test( key_2,
-                    sizeof(key_2)*8,
-                    plaintext_2,
-                    sizeof(plaintext_2),
-                    ciphertext_2,
-                    sizeof(ciphertext_2)))
+    if (aeskw_test(key_2,
+                   sizeof(key_2) * 8,
+                   plaintext_2,
+                   sizeof(plaintext_2),
+                   ciphertext_2,
+                   sizeof(ciphertext_2)))
     {
         printf("Exiting rfc3394_test()\n");
         return (-1);
     }
 
-    if (aeskw_test( key_3,
-                    sizeof(key_3)*8,
-                    plaintext_3,
-                    sizeof(plaintext_3),
-                    ciphertext_3,
-                    sizeof(ciphertext_3)))
+    if (aeskw_test(key_3,
+                   sizeof(key_3) * 8,
+                   plaintext_3,
+                   sizeof(plaintext_3),
+                   ciphertext_3,
+                   sizeof(ciphertext_3)))
     {
         printf("Exiting rfc3394_test()\n");
         return (-1);
     }
 
-    if (aeskw_test( key_4,
-                    sizeof(key_4)*8,
-                    plaintext_4,
-                    sizeof(plaintext_4),
-                    ciphertext_4,
-                    sizeof(ciphertext_4)))
+    if (aeskw_test(key_4,
+                   sizeof(key_4) * 8,
+                   plaintext_4,
+                   sizeof(plaintext_4),
+                   ciphertext_4,
+                   sizeof(ciphertext_4)))
     {
         printf("Exiting rfc3394_test()\n");
         return (-1);
     }
 
-    if (aeskw_test( key_5,
-                    sizeof(key_5)*8,
-                    plaintext_5,
-                    sizeof(plaintext_5),
-                    ciphertext_5,
-                    sizeof(ciphertext_5)))
+    if (aeskw_test(key_5,
+                   sizeof(key_5) * 8,
+                   plaintext_5,
+                   sizeof(plaintext_5),
+                   ciphertext_5,
+                   sizeof(ciphertext_5)))
     {
         printf("Exiting rfc3394_test()\n");
         return (-1);
     }
 
-    if (aeskw_test( key_6,
-                    sizeof(key_6)*8,
-                    plaintext_6,
-                    sizeof(plaintext_6),
-                    ciphertext_6,
-                    sizeof(ciphertext_6)))
+    if (aeskw_test(key_6,
+                   sizeof(key_6) * 8,
+                   plaintext_6,
+                   sizeof(plaintext_6),
+                   ciphertext_6,
+                   sizeof(ciphertext_6)))
     {
         printf("Exiting rfc3394_test()\n");
         return (-1);
@@ -586,7 +743,8 @@ int main()
     }
 
     /*
-     * Test RFC 5649 using published test vectors
+     * Test RFC 5649 using published test vectors, testing both the
+     * internal implementation and OpenSSL's implementation
      */
     if (rfc5649_test())
     {
