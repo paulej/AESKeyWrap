@@ -1,7 +1,7 @@
 #
 # Makefile
 #
-# Copyright (C) 2015
+# Copyright (C) 2015, 2021
 # Paul E. Jones <paulej@packetizer.com>
 #
 # Description
@@ -9,7 +9,7 @@
 #       AES Key Wrap and AES Key Wrap with Padding logic.
 #
 
-CC	= gcc
+CC		= gcc
 
 CFLAGS	= -O2 -Wall
 
@@ -25,4 +25,3 @@ aes_key_wrap_test: $(OBJS)
 
 clean:
 	$(RM) *.o aes_key_wrap_test
-

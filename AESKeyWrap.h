@@ -1,7 +1,7 @@
 /*
  *  AESKeyWrap.h
- *  
- *  Copyright (C) 2015
+ *
+ *  Copyright (C) 2015, 2021
  *  Paul E. Jones <paulej@packetizer.com>
  *
  *  Description:

@@ -1,7 +1,7 @@
 /*
  *  AESKeyWrap.c
- *  
- *  Copyright (C) 2015
+ *
+ *  Copyright (C) 2015, 2021
  *  Paul E. Jones <paulej@packetizer.com>
  *
  *  Description:
@@ -91,7 +91,7 @@ int aes_ecb_encrypt(const unsigned char *key,
                     unsigned int plaintext_length,
                     unsigned char *ciphertext)
 {
-    EVP_CIPHER_CTX ctx;                         /* Crypto context           */
+    EVP_CIPHER_CTX *ctx;                        /* Crypto context           */
     const EVP_CIPHER *cipher = NULL;            /* Cipher to use            */
     int ciphertext_length = 0;                  /* Length of ciphertext     */
     int final_length = 0;                       /* Length of final text     */
@@ -123,41 +123,47 @@ int aes_ecb_encrypt(const unsigned char *key,
     }
 
     /*
+     * Create the cryptographic context
+     */
+    if (!(ctx = EVP_CIPHER_CTX_new())) return AESKW_CIPHER_FAIL;
+
+    /*
      * Encrypt the plaintext
      */
-    EVP_CIPHER_CTX_init(&ctx);
-
-    if (!EVP_EncryptInit_ex(&ctx,
+    if (!EVP_EncryptInit_ex(ctx,
                             cipher,
                             NULL,
                             key,
                             NULL))
     {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+        EVP_CIPHER_CTX_free(ctx);
         return AESKW_CIPHER_FAIL;
     }
 
-    EVP_CIPHER_CTX_set_padding(&ctx, 0);
+    EVP_CIPHER_CTX_set_padding(ctx, 0);
 
-    if (!EVP_EncryptUpdate(&ctx,
+    if (!EVP_EncryptUpdate(ctx,
                            ciphertext,
                            &ciphertext_length,
                            plaintext,
                            plaintext_length))
     {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+        EVP_CIPHER_CTX_free(ctx);
         return AESKW_CIPHER_FAIL;
     }
 
-    if (!EVP_EncryptFinal_ex(   &ctx,
-                                ciphertext + ciphertext_length,
-                                &final_length))
+    if (!EVP_EncryptFinal_ex(ctx,
+                             ciphertext + ciphertext_length,
+                             &final_length))
     {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+        EVP_CIPHER_CTX_free(ctx);
         return AESKW_CIPHER_FAIL;
     }
 
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    /*
+     * Free the cryptographic context
+     */
+    EVP_CIPHER_CTX_free(ctx);
 
     /*
      * Verify the ciphertext length is correct
@@ -212,7 +218,7 @@ int aes_ecb_decrypt(const unsigned char *key,
                     unsigned int ciphertext_length,
                     unsigned char *plaintext)
 {
-    EVP_CIPHER_CTX ctx;                         /* Crypto context           */
+    EVP_CIPHER_CTX *ctx;                        /* Crypto context           */
     const EVP_CIPHER *cipher = NULL;            /* Cipher to use            */
     int plaintext_length = 0;                   /* Length of ciphertext     */
     int final_length = 0;                       /* Length of final text     */
@@ -244,41 +250,47 @@ int aes_ecb_decrypt(const unsigned char *key,
     }
 
     /*
+     * Create the cryptographic context
+     */
+    if (!(ctx = EVP_CIPHER_CTX_new())) return AESKW_CIPHER_FAIL;
+
+    /*
      * Decrypt the ciphertext
      */
-    EVP_CIPHER_CTX_init(&ctx);
-
-    if (!EVP_DecryptInit_ex(&ctx,
+    if (!EVP_DecryptInit_ex(ctx,
                             cipher,
                             NULL,
                             key,
                             NULL))
     {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+        EVP_CIPHER_CTX_free(ctx);
         return AESKW_CIPHER_FAIL;
     }
 
-    EVP_CIPHER_CTX_set_padding(&ctx, 0);
+    EVP_CIPHER_CTX_set_padding(ctx, 0);
 
-    if (!EVP_DecryptUpdate(&ctx,
+    if (!EVP_DecryptUpdate(ctx,
                            plaintext,
                            &plaintext_length,
                            ciphertext,
                            ciphertext_length))
     {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+        EVP_CIPHER_CTX_free(ctx);
         return AESKW_CIPHER_FAIL;
     }
 
-    if (!EVP_DecryptFinal_ex(   &ctx,
-                                plaintext + plaintext_length,
-                                &final_length))
+    if (!EVP_DecryptFinal_ex(ctx,
+                             plaintext + plaintext_length,
+                             &final_length))
     {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+        EVP_CIPHER_CTX_free(ctx);
         return AESKW_CIPHER_FAIL;
     }
 
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    /*
+     * Free the cryptographic context
+     */
+    EVP_CIPHER_CTX_free(ctx);
 
     /*
      * Verify the plaintext length is correct
@@ -711,13 +723,13 @@ int aes_key_wrap_with_padding(  const unsigned char *key,
         /*
          * Encrypt using AES Key Wrap
          */
-        if (aes_key_wrap(   key,
-                            key_length,
-                            ciphertext + 8,
-                            plaintext_padded_length,
-                            ciphertext,
-                            ciphertext,
-                            ciphertext_length))
+        if (aes_key_wrap(key,
+                         key_length,
+                         ciphertext + 8,
+                         plaintext_padded_length,
+                         ciphertext,
+                         ciphertext,
+                         ciphertext_length))
         {
             return AESKW_CIPHER_FAIL;
         }
@@ -863,7 +875,7 @@ int aes_key_unwrap_with_padding(const unsigned char *key,
             return AESKW_CIPHER_FAIL;
         }
     }
-    
+
     /*
      * Determine the original message length and sanity check
      */

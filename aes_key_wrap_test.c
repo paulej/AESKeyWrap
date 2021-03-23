@@ -1,7 +1,7 @@
 /*
  *  aes_key_wrap_test
- *  
- *  Copyright (C) 2015
+ *
+ *  Copyright (C) 2015, 2021
  *  Paul E. Jones <paulej@packetizer.com>
  *
  *  Description:
@@ -18,7 +18,7 @@
 #include <arpa/inet.h>
 #include "AESKeyWrap.h"
 
-/*  
+/*
  *  aeskw_test
  *
  *  Description:
@@ -60,7 +60,7 @@ int aeskw_test( const unsigned char *key,
     const unsigned char *p1, *p2;
 
     /************************************************
-     * ENCRYPT 
+     * ENCRYPT
      ************************************************/
 
     printf("Encrypting using aes_key_wrap()\n");
@@ -153,7 +153,7 @@ int aeskw_test( const unsigned char *key,
     return (0);
 }
 
-/*  
+/*
  *  aeskw_with_padding_test
  *
  *  Description:
@@ -195,7 +195,7 @@ int aeskw_with_padding_test(const unsigned char *key,
     const unsigned char *p1, *p2;
 
     /************************************************
-     * ENCRYPT 
+     * ENCRYPT
      ************************************************/
 
     printf("Encrypting using aes_key_wrap_with_padding()\n");
@@ -287,7 +287,7 @@ int aeskw_with_padding_test(const unsigned char *key,
     return (0);
 }
 
-/*  
+/*
  *  rfc5649_test
  *
  *  Description:
@@ -365,7 +365,7 @@ int rfc5649_test()
     return 0;
 }
 
-/*  
+/*
  *  rfc3394_test
  *
  *  Description:
@@ -598,4 +598,3 @@ int main()
 
     return (0);
 }
-
