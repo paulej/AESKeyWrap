@@ -95,7 +95,9 @@ int aeskw_test(const unsigned char *key,
         printf("Encrypted lengths match\n");
     }
 
-    for(i=0, p1=ciphertext, p2=expected_ciphertext; i<ciphertext_length; i++)
+    for (i = 0, p1 = ciphertext, p2 = expected_ciphertext;
+         i < ciphertext_length;
+         i++)
     {
         if (*(p1++) != *(p2++))
         {
@@ -141,7 +143,9 @@ int aeskw_test(const unsigned char *key,
         printf("Decrypted lengths match\n");
     }
 
-    for(i=0, p1=plaintext, p2=plaintext_check; i<plaintext_check_length; i++)
+    for (i = 0, p1 = plaintext, p2 = plaintext_check;
+         i < plaintext_check_length;
+         i++)
     {
         if (*(p1++) != *(p2++))
         {
@@ -230,7 +234,9 @@ int aeskw_with_padding_test(const unsigned char *key,
         printf("Encrypted lengths match\n");
     }
 
-    for(i=0, p1=ciphertext, p2=expected_ciphertext; i<ciphertext_length; i++)
+    for (i = 0, p1 = ciphertext, p2 = expected_ciphertext;
+         i < ciphertext_length;
+         i++)
     {
         if (*(p1++) != *(p2++))
         {
@@ -275,7 +281,9 @@ int aeskw_with_padding_test(const unsigned char *key,
         printf("Decrypted lengths match\n");
     }
 
-    for(i=0, p1=plaintext, p2=plaintext_check; i<plaintext_check_length; i++)
+    for (i = 0, p1 = plaintext, p2 = plaintext_check;
+         i < plaintext_check_length;
+         i++)
     {
         if (*(p1++) != *(p2++))
         {
@@ -364,7 +372,9 @@ int aeskw_with_padding_test_openssl(const unsigned char *key,
         printf("Encrypted lengths match\n");
     }
 
-    for(i=0, p1=ciphertext, p2=expected_ciphertext; i<ciphertext_length; i++)
+    for (i = 0, p1 = ciphertext, p2 = expected_ciphertext;
+         i < ciphertext_length;
+         i++)
     {
         if (*(p1++) != *(p2++))
         {
@@ -408,7 +418,9 @@ int aeskw_with_padding_test_openssl(const unsigned char *key,
         printf("Decrypted lengths match\n");
     }
 
-    for(i=0, p1=plaintext, p2=plaintext_check; i<plaintext_check_length; i++)
+    for (i = 0, p1 = plaintext, p2 = plaintext_check;
+         i < plaintext_check_length;
+         i++)
     {
         if (*(p1++) != *(p2++))
         {
@@ -517,7 +529,6 @@ int rfc5649_test()
     }
 
     printf("Exiting rfc5649_test()\n");
-
 
     return 0;
 }
@@ -726,7 +737,6 @@ int rfc3394_test()
 
     return 0;
 }
-
 
 /*
  * Entry point for tests
